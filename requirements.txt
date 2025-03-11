@@ -1,0 +1,14 @@
+google-ai-generativelanguage
+langchain
+langchain-core
+langchain-google-genai
+numpy
+pandas
+pillow
+requests
+selenium
+streamlit
+streamlit-dash
+streamlit-js-eval
+tqdm
+webdriver-manager
