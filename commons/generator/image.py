@@ -16,14 +16,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-def install_chrome():
-    if not os.path.exists("/usr/bin/google-chrome"):
-        subprocess.run("wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb", shell=True)
-        subprocess.run("sudo dpkg -i google-chrome-stable_current_amd64.deb", shell=True)
-        subprocess.run("sudo apt-get -f install -y", shell=True)
-
 def init_chromedriver():
     chrome_options = webdriver.ChromeOptions()
+    chrome_options.binary_location = "/usr/bin/chromium-browser"  # Chromium default path in Streamlit Cloud
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
@@ -35,7 +30,6 @@ def init_chromedriver():
     return driver
 
 def get_image_url(query):
-    install_chrome()
     driver = init_chromedriver()
     driver.get(f"https://id.pinterest.com/search/pins/?q={query.lower().replace(' ', '%20')}")
 
