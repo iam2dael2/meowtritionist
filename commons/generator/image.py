@@ -18,13 +18,12 @@ from selenium.webdriver.support import expected_conditions as EC
 
 def init_chromedriver():
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.binary_location = "/usr/bin/chromium-browser"  # Chromium default path in Streamlit Cloud
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
-    service = Service(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install())
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
     driver = webdriver.Chrome(options=chrome_options, service=service)
     
     return driver
