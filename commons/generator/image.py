@@ -9,6 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from instagrapi.image_util import prepare_image
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.core.os_manager import ChromeType
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -17,7 +18,7 @@ def init_chromedriver():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")
 
-    service = Service(ChromeDriverManager().install())
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
     driver = webdriver.Chrome(options=chrome_options, service=service)
     
     return driver
