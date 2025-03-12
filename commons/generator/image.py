@@ -19,7 +19,7 @@ def init_chromedriver():
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
 
-    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+    service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(options=chrome_options, service=service)
     
     return driver
