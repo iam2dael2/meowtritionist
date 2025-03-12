@@ -1,6 +1,8 @@
+from gettext import install
 import os
 import random
 import numpy as np
+import subprocess
 import requests
 
 from PIL import Image
@@ -13,6 +15,12 @@ from webdriver_manager.core.os_manager import ChromeType
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+def install_chrome():
+    if not os.path.exists("/usr/bin/google-chrome"):
+        subprocess.run("wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb", shell=True)
+        subprocess.run("sudo dpkg -i google-chrome-stable_current_amd64.deb", shell=True)
+        subprocess.run("sudo apt-get -f install -y", shell=True)
 
 def init_chromedriver():
     chrome_options = webdriver.ChromeOptions()
@@ -27,6 +35,7 @@ def init_chromedriver():
     return driver
 
 def get_image_url(query):
+    install_chrome()
     driver = init_chromedriver()
     driver.get(f"https://id.pinterest.com/search/pins/?q={query.lower().replace(' ', '%20')}")
 
