@@ -163,6 +163,8 @@ if st.session_state.analysis_complete:
             submitted = st.form_submit_button("Submit")
 
     if st.session_state.ig_username and st.session_state.ig_password and not st.session_state.posting_complete:
+        print("A")
+        
         try:
             upload_image(username=st.session_state.ig_username, 
                          password=st.session_state.ig_password, 
@@ -177,6 +179,8 @@ if st.session_state.analysis_complete:
 
         else:
             st.session_state.posting_complete = True
+        
+        print("B")
     
     else:
         if not st.session_state.posting_complete:
