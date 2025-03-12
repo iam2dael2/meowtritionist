@@ -18,8 +18,10 @@ def init_chromedriver():
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-    service = Service(ChromeDriverManager().install())
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install())
     driver = webdriver.Chrome(options=chrome_options, service=service)
     
     return driver
