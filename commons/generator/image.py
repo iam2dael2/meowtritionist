@@ -2,8 +2,8 @@ from gettext import install
 import os
 import random
 import numpy as np
-import subprocess
 import requests
+import streamlit as st
 
 from PIL import Image
 from instagrapi import Client
@@ -28,6 +28,7 @@ def init_chromedriver():
     
     return driver
 
+@st.cache_data
 def get_image_url(query):
     driver = init_chromedriver()
     driver.get(f"https://id.pinterest.com/search/pins/?q={query.lower().replace(' ', '%20')}")
@@ -38,6 +39,7 @@ def get_image_url(query):
 
     return image_url
 
+@st.cache_data
 def get_image_with_high_resolution(query):
     image_url = get_image_url(query)
     image = Image.open(requests.get(image_url, stream=True).raw)
@@ -49,6 +51,7 @@ def get_image_with_high_resolution(query):
     img = Image.fromarray(resized_image)
     return img
 
+@st.cache_resource
 def upload_image(username, password, image, caption):
     cl = Client()
     cl.login(username=username, password=password)
