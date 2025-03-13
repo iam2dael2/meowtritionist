@@ -1,12 +1,13 @@
 from streamlit_dash import image_select
 from commons.langchain.model import _recommender_chain, _ingredient_extractor_chain, _meal_extractor_chain
-from commons.langchain.prompt import end_prompt, default_prompt_to_extract_items_from_list
+from commons.langchain.prompt import end_prompt, default_prompt_to_extract_items_from_list, string_to_stream
 from commons.generator.image import get_image_with_high_resolution, upload_image
 from instagrapi.exceptions import BadPassword, UnknownError
 from streamlit_js_eval import streamlit_js_eval
 import streamlit as st
 import pandas as pd
 import requests
+import re
 
 st.set_page_config("Meowtritionist", page_icon='😹')
 st.title("Meow-tritionist")
@@ -90,35 +91,64 @@ if st.session_state.finish_choosing_meal_preference and not st.session_state.set
 
 if st.session_state.setup_complete and not st.session_state.analysis_complete:
     # Meal Recommendation
+    if "recommendation_response" not in st.session_state:
+        st.session_state.recommendation_response = ""
+    if "meal_name" not in st.session_state:
+        st.session_state.meal_name = ""
+    if "meal_ingredients" not in st.session_state:
+        st.session_state.meal_ingredients = ""
+    if "meal_steps" not in st.session_state:
+        st.session_state.meal_steps = ""
+
+    # Recommend the meal
     messages = [
         ("system", end_prompt),
         ("user", f"Suggest a suitable {st.session_state.meal_preference} meal for a {st.session_state.age}-year-old {'man' if st.session_state.gender == 'Male' else 'woman'} with a current weight of {st.session_state.current_weight} kg, aiming to reach {st.session_state.target_weight} kg.\n\nAdditional preferences: {st.session_state.description}."),
     ]
 
-    recommendation_stream = _recommender_chain.stream(messages)
+    st.session_state.recommendation_response = _recommender_chain.invoke(messages)
 
-    if "recommendation_response" not in st.session_state:
-        st.session_state.recommendation_response = ""
+    # Extract the meal name    
+    st.session_state.meal_name = _meal_extractor_chain.invoke(f"Extract the meal name from following text\n{st.session_state.recommendation_response}")
+
+    with st.chat_message("human"):
+        st.write(f"What is your recommendation for my {st.session_state.meal_preference} meal?")
 
     with st.chat_message("assistant"):
-        st.session_state.recommendation_response = st.write_stream(recommendation_stream)
-
-    # Extract the meal name
-    if "meal_name" not in st.session_state:
-        st.session_state.meal_name = ""
+        st.write_stream(list(f"Meow! Your purr-fect meal is **{st.session_state.meal_name}** 🐾"))
     
-    st.session_state.meal_name = _meal_extractor_chain.invoke(f"Extract the meal name from following text\n{st.session_state.recommendation_response}")
-    
-    # Nutrition Analysis
-    st.subheader("Nutrition Analysis", divider="rainbow")
-
+    # Extract the meal ingredients
     messages = [
         ("system", default_prompt_to_extract_items_from_list),
         ("user", f"Extract the ingredients, along with appropriate portion sizes, from following text\n{st.session_state.recommendation_response}")
     ]
 
-    ingredients = _ingredient_extractor_chain.invoke(messages)
-    ingredients_query = ", ".join(ingredients)
+    st.session_state.meal_ingredients = _ingredient_extractor_chain.invoke(messages)
+    ingredients_query = ''.join(string_to_stream(st.session_state.meal_ingredients, prefix="* ", separator="\n* ", suffix=""))
+
+    with st.chat_message("human"):
+        st.write(f"What are the required ingredients for {st.session_state.meal_name}?")
+
+    with st.chat_message("assistant"):
+        st.write_stream(list(f"Meowster chef says you need these pawsome ingredients for **{st.session_state.meal_name}** 🐾\n{ingredients_query}"))
+
+    # Extract the meal steps
+    messages = [
+        ("system", default_prompt_to_extract_items_from_list),
+        ("user", f"Extract only the step descriptions from the text, removing step numbers and formatting. Return the result as a list of strings, from following text\n{st.session_state.recommendation_response}")
+    ]
+
+    st.session_state.meal_steps = re.findall(r"\*\*Step \d+\*\*: (.+)\n", st.session_state.recommendation_response)
+    meal_steps_query = ''.join(string_to_stream(st.session_state.meal_steps, prefix="* ", separator="\n* ", suffix=""))
+
+    with st.chat_message("human"):
+        st.write(f"What are the steps to prepare {st.session_state.meal_name}?")
+
+    with st.chat_message("assistant"):
+        st.write_stream(list(f"Time to whip up some purr-fection! Here are the steps to make **{st.session_state.meal_name}** with your chosen ingredients 🐾\n{meal_steps_query}"))
+
+    # Nutrition Analysis
+    st.subheader("Nutrition Analysis", divider="rainbow")
     
     # Extract the nutrition of given ingredients
     api_url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
@@ -163,9 +193,8 @@ if st.session_state.analysis_complete:
             submitted = st.form_submit_button("Submit")
 
     if st.session_state.ig_username and st.session_state.ig_password and not st.session_state.posting_complete:
-        print("A")
-        
         try:
+            message.warning(f"If you believe the Instagram username exists but the submission is still processing, please visit https://www.instagram.com/{st.session_state.ig_username}/ to verify the user.\n\nThis step ensures a smooth verification process.")
             upload_image(username=st.session_state.ig_username, 
                          password=st.session_state.ig_password, 
                          image=meal_image, 
@@ -179,8 +208,6 @@ if st.session_state.analysis_complete:
 
         else:
             st.session_state.posting_complete = True
-        
-        print("B")
     
     else:
         if not st.session_state.posting_complete:

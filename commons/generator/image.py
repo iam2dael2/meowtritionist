@@ -23,6 +23,7 @@ def init_chromedriver():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
+    # service = Service(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install())
     service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
     driver = webdriver.Chrome(options=chrome_options, service=service)
     
@@ -34,7 +35,10 @@ def get_image_url(query):
     driver.get(f"https://id.pinterest.com/search/pins/?q={query.lower().replace(' ', '%20')}")
 
     image_urls = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, "//div[@role='list']//div/img")))
-    image_url = random.choice(image_urls).get_attribute("src")
+    
+    chosen_idx = random.randint(0, min(len(image_urls), 3))
+    image_url = image_urls[chosen_idx].get_attribute("src")
+
     driver.quit()
 
     return image_url
