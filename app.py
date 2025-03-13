@@ -6,8 +6,10 @@ from instagrapi.exceptions import BadPassword, UnknownError
 from streamlit_js_eval import streamlit_js_eval
 import streamlit as st
 import pandas as pd
+from PIL import Image
 import requests
 import re
+import os
 
 st.set_page_config("Meowtritionist", page_icon='😹')
 st.title("Meow-tritionist")
@@ -123,7 +125,9 @@ if st.session_state.setup_complete and not st.session_state.analysis_complete:
         ("user", f"Extract the ingredients, along with appropriate portion sizes, from following text\n{st.session_state.recommendation_response}")
     ]
 
-    st.session_state.meal_ingredients = _ingredient_extractor_chain.invoke(messages)
+    ingredients = st.session_state.recommendation_response.split(r"**Ingredients**")[1].split("\n\n")[0]
+    st.session_state.meal_ingredients = re.findall(r"\*\s+(.+)\n", ingredients)
+    
     ingredients_query = ''.join(string_to_stream(st.session_state.meal_ingredients, prefix="* ", separator="\n* ", suffix=""))
 
     with st.chat_message("human"):
@@ -175,12 +179,14 @@ if st.session_state.setup_complete and not st.session_state.analysis_complete:
         raise requests.exceptions.RequestException("Error:", api_response.status_code, api_response.text)
     
 if st.session_state.analysis_complete:
-    meal_image = get_image_with_high_resolution(query=st.session_state.meal_name)
-
     if "ig_username" not in st.session_state:
         st.session_state.ig_username = ""
     if "ig_password" not in st.session_state:
         st.session_state.ig_password = ""
+    if "temp_image" not in st.session_state:
+        st.session_state.temp_image = ""
+    if "image_caption" not in st.session_state:
+        st.session_state.image_caption = ""
             
     message = st.empty() # Placeholder after user input username and password
     
@@ -192,13 +198,28 @@ if st.session_state.analysis_complete:
 
             submitted = st.form_submit_button("Submit")
 
+    temp_file_path = f"temp_file_{st.session_state.ig_username}.jpg"
+
+    if st.session_state.ig_username and os.path.exists(st.session_state.temp_image): # and (st.session_state.temp_image != temp_file_path):
+        os.remove(st.session_state.temp_image)
+
+    if not os.path.exists(temp_file_path):
+        meal_image = get_image_with_high_resolution(query=st.session_state.meal_name)
+
+    else:
+        meal_image = Image.open(temp_file_path)
+
+    if not st.session_state.image_caption:
+        st.session_state.image_caption = _recommender_chain.invoke(f"Provide a single, straightforward Instagram post caption that tells the audience the content creator is starting a healthy life.\n\nContext:\n{st.session_state.recommendation_response}")
+    
     if st.session_state.ig_username and st.session_state.ig_password and not st.session_state.posting_complete:
         try:
             message.warning(f"If you believe the Instagram username exists but the submission is still processing, please visit https://www.instagram.com/{st.session_state.ig_username}/ to verify the user.\n\nThis step ensures a smooth verification process.")
             upload_image(username=st.session_state.ig_username, 
                          password=st.session_state.ig_password, 
-                         image=meal_image, 
-                         caption=st.session_state.recommendation_response)
+                         image_obj=meal_image, 
+                         image_file_path=temp_file_path,
+                         caption=st.session_state.image_caption)
         
         except UnknownError:
             message.error(f"Username {st.session_state.ig_username} doesn't exist.")
@@ -208,6 +229,12 @@ if st.session_state.analysis_complete:
 
         else:
             st.session_state.posting_complete = True
+
+        finally:
+            if os.path.exists(st.session_state.temp_image):
+                os.remove(st.session_state.temp_image)
+                 
+            st.session_state.temp_image = temp_file_path
     
     else:
         if not st.session_state.posting_complete:
@@ -221,7 +248,7 @@ if st.session_state.analysis_complete:
         st.write(meal_image)
 
         st.subheader("Caption", divider="rainbow")
-        st.write(st.session_state.recommendation_response)
+        st.write(st.session_state.image_caption)
 
     else:
         if st.button("Restart", type="primary"):
