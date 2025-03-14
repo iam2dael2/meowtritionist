@@ -3,6 +3,7 @@ instagrapi
 langchain
 langchain-core
 langchain-google-genai
+matplotlib
 numpy
 pandas
 pillow

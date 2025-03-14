@@ -8,7 +8,6 @@ from PIL import Image
 from instagrapi import Client
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from instagrapi.image_util import prepare_image
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.core.os_manager import ChromeType
 from webdriver_manager.chrome import ChromeDriverManager
