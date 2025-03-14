@@ -190,6 +190,7 @@ def main():
             st.session_state.image_caption = ""
                 
         message = st.empty() # Placeholder after user input username and password
+        refresh_button = st.empty()
         
         _, col, _ = st.columns([1, 2, 1])
         with col:
@@ -220,7 +221,8 @@ def main():
         
         if st.session_state.ig_username and st.session_state.ig_password and not st.session_state.posting_complete:
             try:
-                message.warning(f"If you believe the Instagram username exists but the submission is still processing, please visit https://www.instagram.com/{st.session_state.ig_username}/ to verify the user.\n\nThis step ensures a smooth verification process.")
+                message.warning(f"If you believe the Instagram username exists but the submission is still processing, please visit https://www.instagram.com/{st.session_state.ig_username}/ to verify the user.\n\nPlease click the button below after confirming that the account belongs to you.")
+                refresh_button.button("Refresh", on_click=main)
                 upload_image(username=st.session_state.ig_username, 
                             password=st.session_state.ig_password, 
                             image_obj=meal_image, 
