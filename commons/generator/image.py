@@ -35,17 +35,28 @@ def get_image_url(query):
     driver = init_chromedriver()
     driver.get(f"https://id.pinterest.com/search/pins/?q={query.lower().replace(' ', '%20')}")
 
-    image_urls = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, "//div[@role='list']//div/img")))
-    
-    chosen_idx = random.randint(0, min(len(image_urls), 3))
-    image_url = image_urls[chosen_idx].get_attribute("src")
+    # Choose one photo
+    image_elements = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, "//div[@role='list']//div/img[@src]")))
+
+    chosen_idx = random.randint(0, min(len(image_elements), 5))
+    image_element = image_elements[chosen_idx]
+
+    driver.execute_script("arguments[0].click();", image_element)
+
+    # closeup_image_elements = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, "//div[contains(@data-test-id, 'closeup-image')]//img")))
+    # closeup_image_urls = [image.get_attribute("src") for image in closeup_image_elements]
+    # closeup_image_url = max(closeup_image_urls)
+    # print(f"Images URLs: {closeup_image_urls}")
+
+    closeup_image_element = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "//div//img[contains(@src, 'https://i.pinimg.com/736')]")))
+    closeup_image_url = closeup_image_element.get_attribute("src")
 
     driver.quit()
-
-    return image_url
+    
+    return closeup_image_url
 
 @st.cache_data
-def get_image_with_high_resolution(query):
+def get_image_object(query):
     image_url = get_image_url(query)
     image = Image.open(requests.get(image_url, stream=True).raw)
 
@@ -66,7 +77,7 @@ def upload_image(username, password, image_obj, caption, image_file_path):
     fig.savefig(image_file_path, format="jpg", dpi=1200, bbox_inches="tight", pad_inches=0)
 
     # Prepare the image
-    prepare_image(image_file_path, save_path=image_file_path)
+    resize_image_for_instagram(image_file_path)
 
     cl = Client()
     cl.login(username=username, password=password)
@@ -77,3 +88,15 @@ def upload_image(username, password, image_obj, caption, image_file_path):
                     extra_data={"custom_accessibility_caption": "alt text example",
                                 "like_and_view_counts_disabled": 1,
                                 "disable_comments": 1,})
+    
+def resize_image_for_instagram(input_path, output_path=None, target_size=(1080, 1080)):
+    if not output_path:
+        output_path = input_path
+
+    img = Image.open(input_path)
+    
+    # Resize by using Lanczos method
+    img = img.resize(target_size, Image.LANCZOS)
+
+    # Save a photo with high quality
+    img.save(output_path, "JPEG", quality=95)

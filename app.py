@@ -1,12 +1,12 @@
 from streamlit_dash import image_select
-from commons.langchain.model import _recommender_chain, _ingredient_extractor_chain, _meal_extractor_chain
+from commons.langchain.model import _recommender_chain, _meal_extractor_chain
 from commons.langchain.prompt import end_prompt, default_prompt_to_extract_items_from_list, string_to_stream
-from commons.generator.image import get_image_with_high_resolution, upload_image
+from commons.generator.image import get_image_object, upload_image
 from instagrapi.exceptions import BadPassword, UnknownError
 from streamlit_js_eval import streamlit_js_eval
 import streamlit as st
 import pandas as pd
-from PIL import Image
+from PIL import Image 
 import requests
 import re
 import os
@@ -204,7 +204,7 @@ if st.session_state.analysis_complete:
         os.remove(st.session_state.temp_image)
 
     if not os.path.exists(temp_file_path):
-        meal_image = get_image_with_high_resolution(query=st.session_state.meal_name)
+        meal_image = get_image_object(query=st.session_state.meal_name)
 
     else:
         meal_image = Image.open(temp_file_path)
@@ -229,11 +229,10 @@ if st.session_state.analysis_complete:
 
         else:
             st.session_state.posting_complete = True
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
-        finally:
-            if os.path.exists(st.session_state.temp_image):
-                os.remove(st.session_state.temp_image)
-                 
+        finally:     
             st.session_state.temp_image = temp_file_path
     
     else:
