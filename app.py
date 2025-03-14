@@ -190,8 +190,7 @@ def main():
             st.session_state.image_caption = ""
                 
         message = st.empty() # Placeholder after user input username and password
-        if not st.session_state.posting_complete:
-            refresh_button = st.empty()
+        refresh_button = st.empty()
         
         _, col, _ = st.columns([1, 2, 1])
         with col:
@@ -250,6 +249,7 @@ def main():
 
         if st.session_state.posting_complete:
             message.success("Upload photo completed.")
+            refresh_button.empty()
         
         if not st.session_state.posting_complete:
             st.subheader("Post", divider="rainbow")
