@@ -34,8 +34,9 @@ def get_image_url(query):
 
     # Choose one photo
     image_elements = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, "//div[@role='list']//div/img[@src]")))
+    print(image_elements)
 
-    chosen_idx = random.randint(0, min(len(image_elements), 5))
+    chosen_idx = random.randint(0, min(len(image_elements), 1))
     image_element = image_elements[chosen_idx]
 
     driver.execute_script("arguments[0].click();", image_element)
