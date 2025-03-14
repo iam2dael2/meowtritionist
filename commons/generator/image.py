@@ -8,6 +8,7 @@ from PIL import Image
 from instagrapi import Client
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from instagrapi.image_util import prepare_image
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.core.os_manager import ChromeType
 from webdriver_manager.chrome import ChromeDriverManager
@@ -21,8 +22,8 @@ def init_chromedriver():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
-    # service = Service(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install())
-    service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+    service = Service(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install())
+    # service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
     driver = webdriver.Chrome(options=chrome_options, service=service)
     
     return driver
@@ -75,7 +76,8 @@ def upload_image(username, password, image_obj, caption, image_file_path):
     fig.savefig(image_file_path, format="jpg", dpi=1200, bbox_inches="tight", pad_inches=0)
 
     # Prepare the image
-    resize_image_for_instagram(image_file_path)
+    prepare_image(image_file_path, save_path=image_file_path)
+    # resize_image_for_instagram(image_file_path)
 
     cl = Client()
     cl.login(username=username, password=password)
